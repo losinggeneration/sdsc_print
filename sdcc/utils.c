@@ -6,31 +6,27 @@
 
 #include "utils.h"
 
+/* SDCC port definitions */
 __sfr __at 0x3E io_mem_ctrl;
 __sfr __at 0xFD sdsc_write;
-__sfr __at 0xFC sdsc_ctrl;
 
-void sdsc_clear(uint8_t mctl) {
-	mctl |= 0x4;
-	io_mem_ctrl = mctl;
-	sdsc_ctrl = 2;
-	mctl ^= 0x4;
-	io_mem_ctrl = mctl;
-}
+void sdsc_print(const char *fmt) {
+	/*
+	 * write 0100b to the I/O control portwhich is to disable the joystick
+	 * ports by setting bit 2
+	 */
+	io_mem_ctrl = 4;
 
-void sdsc_nprint(const char *fmt, size_t n) {
-	io_mem_ctrl = 0xC;
-
-	int x;
-	for(x = 0; x < n; ++x) {
+	for(int x = 0; fmt[x] != '\0'; ++x) {
+		/* write to the SDSC port */
 		sdsc_write = fmt[x];
 	}
 
-	io_mem_ctrl = 0x8;
-}
-
-void sdsc_print(const char *fmt) {
-	sdsc_nprint(fmt, strlen(fmt));
+	/*
+	 * write 0 to the I/O control portwhich is to disable the joystick ports by
+	 * clearing bit 2
+	 */
+	io_mem_ctrl = 0;
 }
 
 void sdsc_printf(const char *fmt, ...) {
