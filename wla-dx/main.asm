@@ -45,36 +45,31 @@ start:
 ; really tested, so if you see the joysticks not working
 ; after calling this, that's why.
 sdsc_print:
-    push AF
-    push DE  ; save registers we'll be modifying
-    push IX
+    push AF  ; save registers we'll be modifying
 
     ld A, $4     ; write 0100b to the I/O control port
     out ($3E), A ; which is to disable the joystick ports
                  ; by setting bit 2
 
-    ; set up IX with the address from HL
-    ld D, H
-    ld E, L
-    ld IX, 0
-    add IX, DE
+    call write_string
 
--   ld A, (IX + 0) ; load the value at the address in IX
-    cp 0           ; if the character is zero, we're done
-    jr Z, +
-
-    out ($FD), A   ; write that character
-    inc IX         ; move to the next character
-    jr NZ, -       ; and loop until we're out of characters
-
-+   ld A, $0       ; write 0 to the I/O control port
+    ld A, $0       ; write 0 to the I/O control port
     out ($3E), A   ; which is to re-enable the joystick ports
                    ; by clearing bit 2
 
-    pop IX
-    pop DE  ; restore registers
-    pop AF
+    pop AF  ; restore registers
     ret
+
+; HL address of message. Must be NULL byte terminated.
+; A is overwritten for this
+write_string:
+-   ld A, (HL)     ; load the value at the address in HL
+    cp 0           ; if the character is zero,
+    ret Z          ; we're done
+
+    out ($FD), A   ; write that character
+    inc HL         ; move to the next character
+    jr -           ; and loop until we're out of characters
 
 _exit:
     ; Exit - special code to the emulator
